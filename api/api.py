@@ -1,8 +1,9 @@
 import os
 
-
 from flask import Flask, request, redirect, session, url_for, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
+load_dotenv()
 
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
@@ -13,11 +14,11 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 app.config['SECRET_KEY'] = 'dev-secret-key'  # In production, use a secure random key and keep it secret
 
-client_id = 'a47d794efc9842608f2b633029d35f96'
-client_secret = 'fd70260cca7b4cc48d5132fb188ffbd0'
+client_id = os.getenv('SPOTIPY_CLIENT_ID')
+client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
 
 FLASK_URL = 'http://127.0.0.1:5000'
-REACT_URL = 'http://localhost:5173'
+REACT_URL = os.getenv('REACT_URL')
 
 redirect_url = f"{FLASK_URL}/callback"
 scope = 'user-read-playback-state'
