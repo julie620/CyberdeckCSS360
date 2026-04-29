@@ -47,7 +47,8 @@ function App() {
             <p>{currentPlayback.message}</p>
           ) : (
             <>
-              <p>Currently playing: {currentPlayback.track_name}</p>
+              <img src={currentPlayback.cover_URL} className="cover" alt="album cover" />
+              <p>{currentPlayback.track_name}</p>
               <p>Artist: {currentPlayback.artist_name}</p>
               <p>
                 Progress: {
