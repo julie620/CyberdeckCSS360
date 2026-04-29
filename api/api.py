@@ -7,12 +7,12 @@ load_dotenv()
 
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
-from spotipy.cache_handler import FlaskSessionCacheHandler
+from spotipy.cache_handler import CacheFileHandler
 
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-app.config['SECRET_KEY'] = 'dev-secret-key'  # In production, use a secure random key and keep it secret
+
 
 client_id = os.getenv('SPOTIPY_CLIENT_ID')
 client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
@@ -23,7 +23,8 @@ REACT_URL = os.getenv('REACT_URL')
 redirect_url = f"{FLASK_URL}/callback"
 scope = 'user-read-playback-state'
 
-cache_handler = FlaskSessionCacheHandler(session)
+cache_handler = CacheFileHandler(cache_path='.spotify_cache')
+
 sp_oauth = SpotifyOAuth(client_id, 
     client_secret, 
     redirect_url, 
@@ -75,7 +76,8 @@ def playback():
             "track_name": playback_info["item"]["name"],
             "artist_name": playback_info["item"]["artists"][0]["name"],
             "is_playing": playback_info["is_playing"],
-            "progress_ms": playback_info["progress_ms"]
+            "progress_ms": playback_info["progress_ms"],
+            "cover_URL": playback_info["item"]["album"]["images"][0]["url"]
         })
     else:
         return jsonify({
