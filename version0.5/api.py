@@ -15,7 +15,7 @@ FLASK_URL = os.getenv('FLASK_URL', 'http://127.0.0.1:5000')
  
 cache_handler = CacheFileHandler(cache_path='.spotify_cache')
 sp_oauth = SpotifyOAuth(client_id, client_secret, f"{FLASK_URL}/callback",
-    scope='user-read-playback-state', cache_handler=cache_handler, show_dialog=True)
+scope='user-read-playback-state', cache_handler=cache_handler, show_dialog=True)
 sp = Spotify(auth_manager=sp_oauth)
  
  
