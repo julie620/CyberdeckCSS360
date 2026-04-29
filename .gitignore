@@ -9,3 +9,6 @@ __pycache__/
 
 # Pytest cache
 .pytest_cache/
+
+#spotify credentials
+.spotify_cache
