@@ -34,7 +34,6 @@ function App() {
 
   return (
     <>
-      <h1>Spotify Playback</h1>
       {currentPlayback?.auth_required && (
         <a href={currentPlayback.auth_url}>
           Login with Spotify
