@@ -1,5 +1,5 @@
 # CyberdeckCSS360
-Have to add .env file containing 
+Have to add .env file in api folder containing: 
 FLASK_APP=api.py
 FLASK_ENV=development
 SPOTIPY_CLIENT_ID=your_client_id
