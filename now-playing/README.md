@@ -9,8 +9,8 @@ Requirements
 Write this in the terminal:
 
 ```
-git clone <repository-url>
-cd Cyber-deck-Project
+git clone https://github.com/dippityy/CyberdeckCSS360.git
+cd CyberdeckCSS360/now-playing
 ```
 
 2. Install the required packages
