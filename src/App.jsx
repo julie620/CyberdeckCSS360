@@ -35,7 +35,6 @@ function App() {
   return (
     <>
       <h1>Spotify Playback</h1>
-      <p>{String(currentPlayback?.auth_required)}</p>
       {currentPlayback?.auth_required && (
         <a href={currentPlayback.auth_url}>
           Login with Spotify
@@ -48,10 +47,16 @@ function App() {
             <p>{currentPlayback.message}</p>
           ) : (
             <>
-              <p> HELLO WORLD</p>
               <p>Currently playing: {currentPlayback.track_name}</p>
               <p>Artist: {currentPlayback.artist_name}</p>
-              <p>Progress: {currentPlayback.progress_ms} ms</p>
+              <p>
+                Progress: {
+                  Math.floor(currentPlayback.progress_ms / 60000)
+                }:
+                {
+                  String(Math.floor((currentPlayback.progress_ms % 60000) / 1000)).padStart(2, '0')
+                }
+              </p>
               <p>Status: {currentPlayback.is_playing ? 'Playing' : 'Paused'}</p>
             </>
           )}
