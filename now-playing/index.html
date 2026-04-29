@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Now Playing</title>
+</head>
+<body>
+    <h1>Now Playing</h1>
+    {% if track %}
+        <img src="{{ track.cover }}" alt="Album cover" width="300">
+        <p><strong>Song:</strong> {{ track.name }}</p>
+        <p><strong>Artist:</strong> {{ track.artists }}</p>
+        <p><strong>Album:</strong> {{ track.album }}</p>
+        <p><strong>Playing:</strong> {{ track.is_playing }}</p>
+    {% else %}
+        <p>Nothing is currently playing.</p>
+    {% endif %}
+</body>
+</html>
