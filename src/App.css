@@ -139,3 +139,23 @@
     border-right-color: var(--border);
   }
 }
+
+body  {
+  background-color: #000000;
+}
+
+#playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: absolute;
+    bottom: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#playback-controls button {
+    border: none;
+    background: none;
+    color: #FFFFFF;
+}
