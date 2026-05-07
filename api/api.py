@@ -21,7 +21,7 @@ FLASK_URL = 'http://127.0.0.1:5000'
 REACT_URL = os.getenv('REACT_URL')
 
 redirect_url = f"{FLASK_URL}/callback"
-scope = 'user-read-playback-state'
+scope = 'user-read-playback-state user-modify-playback-state'
 
 cache_handler = CacheFileHandler(cache_path='.spotify_cache')
 
@@ -85,6 +85,36 @@ def playback():
             "message": "No track currently playing",
             "is_playing": False
         })
+
+@app.route('/playpause', methods=["POST"])
+def toggleplayback():
+    playback = sp.current_playback()
+
+    if playback and playback["is_playing"]:
+        sp.pause_playback()
+        return jsonify({
+            "success": True
+        })
+
+    else:
+        sp.start_playback()
+        return jsonify({
+            "success": True
+        })
+    
+@app.route('/next', methods=["POST"])
+def skip_next():
+    sp.next_track()
+    return jsonify({
+        "success": True
+    })
+
+@app.route('/previous', methods=["POST"])
+def skip_previous():
+    sp.previous_track()
+    return jsonify({
+        "success": True
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)
