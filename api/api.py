@@ -77,6 +77,7 @@ def playback():
             "artist_name": playback_info["item"]["artists"][0]["name"],
             "is_playing": playback_info["is_playing"],
             "progress_ms": playback_info["progress_ms"],
+            "duration_ms": playback_info["item"]["duration_ms"],
             "cover_URL": playback_info["item"]["album"]["images"][0]["url"]
         })
     else:

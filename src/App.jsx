@@ -1,69 +1,84 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useState, useEffect } from "react";
+import "./App.css";
+
+const fmt = (ms) => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
 
 function App() {
-  const [currentPlayback, setPlayback] = useState(null)
+  const [currentPlayback, setPlayback] = useState(null);
 
   useEffect(() => {
     const fetchPlayback = () => {
-      console.log('Fetching playback...')
-      fetch('/api/playback', {
-        credentials: 'include'
-      })
-        .then((res) => {
-          console.log('Response status:', res.status)
-          return res.json()
-        })
-        .then((data) => {
-          console.log('Received data:', data)
-          setPlayback(data)
-        })
-        .catch((error) => {
-          console.error('Error fetching playback data:', error)
-        })
-    }
+      fetch("/api/playback", { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => setPlayback(data))
+        .catch((error) =>
+          console.error("Error fetching playback data:", error),
+        );
+    };
 
-    fetchPlayback()
+    fetchPlayback();
+    const interval = setInterval(fetchPlayback, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-    const interval = setInterval(fetchPlayback, 1000)
+  if (currentPlayback?.auth_required) {
+    return (
+      <div className="now-playing">
+        <div className="login">
+          <a href={currentPlayback.auth_url}>Sign in with Spotify</a>
+        </div>
+      </div>
+    );
+  }
 
-    return () => clearInterval(interval)
-  }, [])
+  if (!currentPlayback?.track_name) {
+    return (
+      <div className="now-playing">
+        <div className="idle">
+          <h1 className="title">{currentPlayback?.message}</h1>
+        </div>
+      </div>
+    );
+  }
 
-  console.log('Rendering App, currentPlayback:', currentPlayback)
+  const pct = Math.min(
+    100,
+    (currentPlayback.progress_ms / Math.max(1, currentPlayback.duration_ms)) *
+      100,
+  );
 
   return (
-    <>
-      {currentPlayback?.auth_required && (
-        <a href={currentPlayback.auth_url}>
-          Login with Spotify
-        </a>
-      )}
-
-      {currentPlayback && !currentPlayback.auth_required && (
-        <div>
-          {currentPlayback.message ? (
-            <p>{currentPlayback.message}</p>
-          ) : (
-            <>
-              <img src={currentPlayback.cover_URL} className="cover" alt="album cover" />
-              <p>{currentPlayback.track_name}</p>
-              <p>Artist: {currentPlayback.artist_name}</p>
-              <p>
-                Progress: {
-                  Math.floor(currentPlayback.progress_ms / 60000)
-                }:
-                {
-                  String(Math.floor((currentPlayback.progress_ms % 60000) / 1000)).padStart(2, '0')
-                }
-              </p>
-              <p>Status: {currentPlayback.is_playing ? 'Playing' : 'Paused'}</p>
-            </>
-          )}
+    <div className="now-playing">
+      <div className="device">
+        <div className="cover">
+          <img src={currentPlayback.cover_URL} alt="album cover" />
         </div>
-      )}
-    </>
-  )
+
+        <div className="meta">
+          <h1 className="title">{currentPlayback.track_name}</h1>
+          <div className="artist">{currentPlayback.artist_name}</div>
+        </div>
+
+        <div className="progress">
+          <div className="bar">
+            <div className="fill" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="times">
+            <span className="left">{fmt(currentPlayback.progress_ms)}</span>
+            <span className="status">
+              {currentPlayback.is_playing ? "PLAYING" : "PAUSED"}
+            </span>
+            <span className="right">{fmt(currentPlayback.duration_ms)}</span>
+          </div>
+        </div>
+
+        <div className="controls" />
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
