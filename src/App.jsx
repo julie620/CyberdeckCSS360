@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import previousButton from './assets/previous.png'
+import pauseButton from './assets/pause.png'
+import nextButton from './assets/next.png'
+import playButton from './assets/play.png'
 
 function App() {
   const [currentPlayback, setPlayback] = useState(null)
