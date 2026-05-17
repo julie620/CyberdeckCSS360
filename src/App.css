@@ -120,6 +120,11 @@
 .controls {
   grid-area: controls;
   min-height: clamp(80px, 18vh, 180px);
+  max-width: var(--line-width, clamp(420px, 48vw, 1000px));
+  margin-top: clamp(60px, 12vh, 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .idle {
@@ -157,4 +162,35 @@
     font-style: italic;
     font-size: 18px;
   }
+}
+
+body  {
+  background-color: #000000;
+}
+
+#playback-controls {
+    display: flex;
+    align-items: center;
+    gap: clamp(48px, 7vw, 96px);
+}
+
+#playback-controls button {
+    border: none;
+    background: none;
+    color: #FFFFFF;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#playback-controls .btn-skip img {
+    width: clamp(32px, 3.2vw, 50px);
+    height: auto;
+}
+
+#playback-controls .btn-play img {
+    width: clamp(64px, 7vw, 100px);
+    height: auto;
 }

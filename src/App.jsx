@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import "./App.css";
+import previousButton from "./assets/previous.png";
+import playButton from "./assets/play.png";
+import pauseButton from "./assets/pause.png";
+import nextButton from "./assets/next.png";
 
 const fmt = (ms) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -50,6 +54,27 @@ function App() {
       100,
   );
 
+  const togglePlayback = async () => {
+    await fetch("/api/playpause", {
+      credentials: "include",
+      method: "POST",
+    });
+  };
+
+  const skipNext = async () => {
+    await fetch("/api/next", {
+      credentials: "include",
+      method: "POST",
+    });
+  };
+
+  const skipPrevious = async () => {
+    await fetch("/api/previous", {
+      credentials: "include",
+      method: "POST",
+    });
+  };
+
   return (
     <div className="now-playing">
       <div className="device">
@@ -75,7 +100,24 @@ function App() {
           </div>
         </div>
 
-        <div className="controls" />
+        <div className="controls">
+          <div id="playback-controls">
+            <button className="btn-skip" onClick={skipPrevious}>
+              <img src={previousButton} alt="Previous" />
+            </button>
+
+            <button className="btn-play" onClick={togglePlayback}>
+              <img
+                src={currentPlayback.is_playing ? pauseButton : playButton}
+                alt={currentPlayback.is_playing ? "pause" : "play"}
+              />
+            </button>
+
+            <button className="btn-skip" onClick={skipNext}>
+              <img src={nextButton} alt="Next" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
