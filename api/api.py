@@ -7,12 +7,12 @@ allowing users to authenticate and control their Spotify playback.
 
 import os
 
-from flask import Flask, request, redirect, jsonify
-from flask_cors import CORS
 from dotenv import load_dotenv
+from flask import Flask, jsonify, redirect, request
+from flask_cors import CORS
 from spotipy import Spotify
-from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import CacheFileHandler
+from spotipy.oauth2 import SpotifyOAuth
 
 load_dotenv()
 
