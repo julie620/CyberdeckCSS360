@@ -4,6 +4,7 @@ Python/flask backend module for the Cyberdeck CSS 360 project.
 Uses the Spotipy library to interact with the Spotify Web API,
 allowing users to authenticate and control their Spotify playback.
 """
+
 import os
 
 from flask import Flask, request, redirect, jsonify
@@ -19,30 +20,31 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
 
-client_id = os.getenv('SPOTIPY_CLIENT_ID')
-client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
+client_id = os.getenv("SPOTIPY_CLIENT_ID")
+client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
 
-FLASK_URL = 'http://127.0.0.1:5000'
-REACT_URL = os.getenv('REACT_URL')
+FLASK_URL = "http://127.0.0.1:5000"
+REACT_URL = os.getenv("REACT_URL")
 
 REDIRECT_URL = f"{FLASK_URL}/callback"
 SCOPE = """user-read-playback-state user-modify-playback-state playlist-read-private
 playlist-read-collaborative"""
 
-cache_handler = CacheFileHandler(cache_path='.spotify_cache')
+cache_handler = CacheFileHandler(cache_path=".spotify_cache")
 
-sp_oauth = SpotifyOAuth(client_id,
+sp_oauth = SpotifyOAuth(
+    client_id,
     client_secret,
     REDIRECT_URL,
     scope=SCOPE,
     cache_handler=cache_handler,
-    show_dialog=True
+    show_dialog=True,
 )
 
 sp = Spotify(auth_manager=sp_oauth)
 
 
-@app.route('/')
+@app.route("/")
 def home():
     """
     Home route.
@@ -59,7 +61,7 @@ def home():
     return redirect(REACT_URL)
 
 
-@app.route('/login')
+@app.route("/login")
 def login():
     """
     Start Spotify authentication flow.
@@ -71,7 +73,7 @@ def login():
     return redirect(auth_url)
 
 
-@app.route('/callback')
+@app.route("/callback")
 def callback():
     """
     Handle Spotify OAuth callback.
@@ -91,7 +93,7 @@ def callback():
     return redirect(REACT_URL)
 
 
-@app.route('/playback')
+@app.route("/playback")
 def playback():
     """
     Retrieve current Spotify playback information.
@@ -100,34 +102,34 @@ def playback():
         Response: JSON response containing playback information.
     """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        #auth_url = sp_oauth.get_authorize_url()
-        return jsonify({
-            "auth_required": True,
-            "auth_url": f"{FLASK_URL}/login"
-        })
+        # auth_url = sp_oauth.get_authorize_url()
+        return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
 
     playback_info = sp.current_playback()
 
     if playback_info and playback_info.get("item"):
-        return jsonify({
+        return jsonify(
+            {
+                "auth_required": False,
+                "track_name": playback_info["item"]["name"],
+                "artist_name": playback_info["item"]["artists"][0]["name"],
+                "is_playing": playback_info["is_playing"],
+                "progress_ms": playback_info["progress_ms"],
+                "duration_ms": playback_info["item"]["duration_ms"],
+                "cover_URL": playback_info["item"]["album"]["images"][0]["url"],
+            }
+        )
+
+    return jsonify(
+        {
             "auth_required": False,
-            "track_name": playback_info["item"]["name"],
-            "artist_name": playback_info["item"]["artists"][0]["name"],
-            "is_playing": playback_info["is_playing"],
-            "progress_ms": playback_info["progress_ms"],
-            "duration_ms": playback_info["item"]["duration_ms"],
-            "cover_URL": playback_info["item"]["album"]["images"][0]["url"]
-        })
-
-    return jsonify({
-        "auth_required": False,
-        "message": "No track currently playing",
-        "is_playing": False
-    })
+            "message": "No track currently playing",
+            "is_playing": False,
+        }
+    )
 
 
-
-@app.route('/playpause', methods=["POST"])
+@app.route("/playpause", methods=["POST"])
 def toggleplayback():
     """
     Toggle Spotify playback state.
@@ -142,17 +144,13 @@ def toggleplayback():
 
     if playback_info and playback_info["is_playing"]:
         sp.pause_playback()
-        return jsonify({
-            "success": True
-        })
+        return jsonify({"success": True})
 
     sp.start_playback()
-    return jsonify({
-        "success": True
-    })
+    return jsonify({"success": True})
 
 
-@app.route('/next', methods=["POST"])
+@app.route("/next", methods=["POST"])
 def skip_next():
     """
     Skip to the next Spotify track.
@@ -161,12 +159,10 @@ def skip_next():
         Response: JSON success response.
     """
     sp.next_track()
-    return jsonify({
-        "success": True
-    })
+    return jsonify({"success": True})
 
 
-@app.route('/previous', methods=["POST"])
+@app.route("/previous", methods=["POST"])
 def skip_previous():
     """
     Skip to the previous Spotify track.
@@ -175,24 +171,23 @@ def skip_previous():
         Response: JSON success response.
     """
     sp.previous_track()
-    return jsonify({
-        "success": True
-    })
+    return jsonify({"success": True})
+
 
 @app.route("/playlists")
 def get_playlists():
     """
-        Retrieves user's Spotify playlists
+    Retrieves user's Spotify playlists
 
-        Returns:
-            Response:
-                - whether user needs to authenticate
-                - login URL where user needs to authenticate
-                - a list of formatted playlist objects
-                    - id
-                    - name
-                    - cover_url
-                    - owner
+    Returns:
+        Response:
+            - whether user needs to authenticate
+            - login URL where user needs to authenticate
+            - a list of formatted playlist objects
+                - id
+                - name
+                - cover_url
+                - owner
     """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
@@ -214,17 +209,19 @@ def get_playlists():
         )
     return jsonify({"auth_required": False, "playlists": formatted_playlists})
 
+
 @app.route("/play-playlist", methods=["POST"])
 def play_playlist():
-     """
-        Start playback for Spotify playlist
+    """
+    Start playback for Spotify playlist
 
-        Returns:
-            Response: JSON success response
+    Returns:
+        Response: JSON success response
     """
     data = request.json
     sp.start_playback(context_uri=data["context_uri"])
     return jsonify({"success": True})
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
