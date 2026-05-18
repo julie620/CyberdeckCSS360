@@ -178,5 +178,33 @@ def skip_previous():
         "success": True
     })
 
+@app.route("/playlists")
+def get_playlists():
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
+
+    playlists = sp.current_user_playlists(limit=50)
+    playlists = playlists.get("items", [])
+
+    formatted_playlists = []
+    for playlist in playlists:
+        formatted_playlists.append(
+            {
+                "id": playlist.get("id"),
+                "name": playlist.get("name"),
+                "cover_url": (
+                    playlist["images"][0]["url"] if playlist.get("images") else None
+                ),
+                "owner": playlist.get("owner", {}).get("display_name", "Unknown"),
+            }
+        )
+    return jsonify({"auth_required": False, "playlists": formatted_playlists})
+
+@app.route("/play-playlist", methods=["POST"])
+def play_playlist():
+    data = request.json
+    sp.start_playback(context_uri=data["context_uri"])
+    return jsonify({"success": True})
+
 if __name__ == '__main__':
     app.run(debug=True)
