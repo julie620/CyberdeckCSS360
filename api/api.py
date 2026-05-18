@@ -26,7 +26,8 @@ FLASK_URL = 'http://127.0.0.1:5000'
 REACT_URL = os.getenv('REACT_URL')
 
 REDIRECT_URL = f"{FLASK_URL}/callback"
-SCOPE = 'user-read-playback-state user-modify-playback-state playlist-read-private playlist-read-collaborative'
+SCOPE = """user-read-playback-state user-modify-playback-state playlist-read-private
+playlist-read-collaborative"""
 
 cache_handler = CacheFileHandler(cache_path='.spotify_cache')
 
@@ -180,6 +181,19 @@ def skip_previous():
 
 @app.route("/playlists")
 def get_playlists():
+    """
+        Retrieves user's Spotify playlists
+
+        Returns:
+            Response:
+                - whether user needs to authenticate
+                - login URL where user needs to authenticate
+                - a list of formatted playlist objects
+                    - id
+                    - name
+                    - cover_url
+                    - owner
+    """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
 
@@ -202,6 +216,12 @@ def get_playlists():
 
 @app.route("/play-playlist", methods=["POST"])
 def play_playlist():
+     """
+        Start playback for Spotify playlist
+
+        Returns:
+            Response: JSON success response
+    """
     data = request.json
     sp.start_playback(context_uri=data["context_uri"])
     return jsonify({"success": True})
