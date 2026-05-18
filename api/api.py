@@ -26,7 +26,7 @@ FLASK_URL = 'http://127.0.0.1:5000'
 REACT_URL = os.getenv('REACT_URL')
 
 REDIRECT_URL = f"{FLASK_URL}/callback"
-SCOPE = 'user-read-playback-state user-modify-playback-state'
+SCOPE = 'user-read-playback-state user-modify-playback-state playlist-read-private playlist-read-collaborative'
 
 cache_handler = CacheFileHandler(cache_path='.spotify_cache')
 
