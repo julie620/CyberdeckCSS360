@@ -12,3 +12,6 @@ __pycache__/
 
 #spotify credentials
 .spotify_cache
+
+#node packages
+node_modules/
