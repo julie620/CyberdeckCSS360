@@ -27,7 +27,8 @@ FLASK_URL = 'http://127.0.0.1:5000'
 REACT_URL = os.getenv('REACT_URL')
 
 REDIRECT_URL = f"{FLASK_URL}/callback"
-SCOPE = 'user-read-playback-state user-modify-playback-state user-top-read user-read-recently-played'
+SCOPE = """user-read-playback-state user-modify-playback-state user-top-read
+user-read-recently-played playlist-read-private playlist-read-collaborative user-library-read"""
 
 cache_handler = CacheFileHandler(cache_path='.spotify_cache')
 
@@ -281,6 +282,88 @@ def discover():
         "suggestions": suggestions
     })
 
+@app.route("/playlists")
+def get_playlists():
+    """
+    Retrieves user's Spotify playlists
+
+    Returns:
+        Response:
+            - whether user needs to authenticate
+            - login URL where user needs to authenticate
+            - a list of formatted playlist objects
+                - id
+                - name
+                - cover_url
+                - owner
+    """
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
+
+    playlists = sp.current_user_playlists(limit=50)
+    playlists = playlists.get("items", [])
+
+    formatted_playlists = []
+    for playlist in playlists:
+        formatted_playlists.append(
+            {
+                "id": playlist.get("id"),
+                "name": playlist.get("name"),
+                "cover_url": (
+                    playlist["images"][0]["url"] if playlist.get("images") else None
+                ),
+                "owner": playlist.get("owner", {}).get("display_name", "Unknown"),
+            }
+        )
+    return jsonify({"auth_required": False, "playlists": formatted_playlists})
+
+
+@app.route("/play-browse", methods=["POST"])
+def play_playlist():
+    """
+    Start playback for Spotify playlist
+
+    Returns:
+        Response: JSON success response
+    """
+    data = request.json
+    sp.start_playback(context_uri=data["context_uri"])
+    return jsonify({"success": True})
+
+
+@app.route("/albums")
+def get_albums():
+    """
+    Retrieves user's Saved Albums
+
+    Returns:
+        Response:
+            - whether user needs to authenticate
+            - login URL where user needs to authenticate
+            - a list of formatted album objects
+                - id
+                - name
+                - artist
+                - uri
+                - cover_url
+    """
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
+
+    results = sp.current_user_saved_albums(limit=50)
+    albums = []
+    for item in results.get("items", []):
+        album = item["album"]
+        albums.append(
+            {
+                "id": album["id"],
+                "name": album["name"],
+                "artist": album["artists"][0]["name"],
+                "uri": album["uri"],
+                "cover_url": album["images"][0]["url"] if album.get("images") else None,
+            }
+        )
+    return jsonify({"auth_required": False, "albums": albums})
 
 if __name__ == '__main__':
     app.run(debug=True)
