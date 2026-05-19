@@ -1,0 +1,118 @@
+.discover {
+  width: 100vw;
+  min-height: 100vh;
+  padding: clamp(80px, 12vh, 120px) clamp(20px, 5vw, 80px) clamp(40px, 8vh, 80px);
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.discover-title {
+  font-size: clamp(40px, 6vw, 80px);
+  letter-spacing: -0.01em;
+  margin: 0 0 clamp(32px, 5vh, 64px);
+}
+
+.discover-section {
+  margin-bottom: clamp(32px, 5vh, 64px);
+}
+
+.discover-section-title {
+  font-size: clamp(20px, 2.4vw, 32px);
+  margin: 0 0 16px;
+  color: var(--text);
+}
+
+.discover-section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.track-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.track-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.track-card-cover {
+  flex: 0 0 auto;
+  width: clamp(56px, 8vw, 80px);
+  height: clamp(56px, 8vw, 80px);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0a0a0e;
+}
+
+.track-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.track-card-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #0a0a0e;
+}
+
+.track-card-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.track-card-name {
+  font-size: clamp(15px, 1.5vw, 18px);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-card-subtitle {
+  font-size: clamp(13px, 1.2vw, 15px);
+  color: var(--dim);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 60vh;
+  font-size: 18px;
+  color: var(--dim);
+}
+
+.discover-state button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.discover-state a {
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: 12px 22px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-style: italic;
+  font-size: 18px;
+}

@@ -5,6 +5,7 @@ Uses the Spotipy library to interact with the Spotify Web API,
 allowing users to authenticate and control their Spotify playback.
 """
 import os
+import random
 
 from flask import Flask, request, redirect, jsonify
 from flask_cors import CORS
@@ -26,7 +27,7 @@ FLASK_URL = 'http://127.0.0.1:5000'
 REACT_URL = os.getenv('REACT_URL')
 
 REDIRECT_URL = f"{FLASK_URL}/callback"
-SCOPE = 'user-read-playback-state user-modify-playback-state'
+SCOPE = 'user-read-playback-state user-modify-playback-state user-top-read user-read-recently-played'
 
 cache_handler = CacheFileHandler(cache_path='.spotify_cache')
 
@@ -177,6 +178,109 @@ def skip_previous():
     return jsonify({
         "success": True
     })
+
+
+@app.route('/discover')
+def discover():
+    """
+    Retrieve suggested tracks for the Discover page.
+
+    Returns:
+        Response: JSON response containing a list of suggested tracks.
+    """
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        return jsonify({
+            "auth_required": True,
+            "auth_url": f"{FLASK_URL}/login"
+        })
+
+    known_ids = set()
+    seen_artist_ids = set()
+
+    recent_seed_artists = []
+    try:
+        recent = sp.current_user_recently_played(limit=50)
+        for item in recent["items"]:
+            track = item["track"]
+            known_ids.add(track["id"])
+            if track["artists"]:
+                a = track["artists"][0]
+                if a["id"] not in seen_artist_ids and len(recent_seed_artists) < 5:
+                    seen_artist_ids.add(a["id"])
+                    recent_seed_artists.append({"id": a["id"], "name": a["name"]})
+    except Exception:
+        pass
+
+    top_seed_artists = []
+    try:
+        top_artists = sp.current_user_top_artists(limit=5, time_range="medium_term")
+        for a in top_artists["items"]:
+            if a["id"] in seen_artist_ids:
+                continue
+            seen_artist_ids.add(a["id"])
+            top_seed_artists.append({"id": a["id"], "name": a["name"]})
+    except Exception:
+        pass
+
+    if not recent_seed_artists and not top_seed_artists:
+        return jsonify({
+            "auth_required": False,
+            "suggestions": []
+        })
+
+    for time_range in ("short_term", "medium_term", "long_term"):
+        try:
+            top_tracks = sp.current_user_top_tracks(limit=50, time_range=time_range)
+            known_ids.update(t["id"] for t in top_tracks["items"])
+        except Exception:
+            pass
+
+    def pick_tracks_for_artist(artist, n):
+        picks = []
+        for offset in (20, 10, 0):
+            try:
+                results = sp.search(
+                    q=f'artist:"{artist["name"]}"',
+                    type="track",
+                    limit=10,
+                    offset=offset,
+                    market="US",
+                )
+            except Exception:
+                continue
+            for t in results["tracks"]["items"]:
+                if len(picks) >= n:
+                    break
+                if t["id"] in known_ids:
+                    continue
+                if not any(a["id"] == artist["id"] for a in t["artists"]):
+                    continue
+                picks.append({
+                    "id": t["id"],
+                    "name": t["name"],
+                    "artist": t["artists"][0]["name"],
+                    "cover_url": t["album"]["images"][0]["url"] if t["album"]["images"] else None,
+                    "uri": t["uri"],
+                    "source_artist": artist["name"]
+                })
+                known_ids.add(t["id"])
+            if len(picks) >= n:
+                break
+        return picks
+
+    suggestions = []
+    for artist in recent_seed_artists:
+        suggestions.extend(pick_tracks_for_artist(artist, 3))
+    for artist in top_seed_artists:
+        suggestions.extend(pick_tracks_for_artist(artist, 2))
+
+    random.shuffle(suggestions)
+
+    return jsonify({
+        "auth_required": False,
+        "suggestions": suggestions
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True)
