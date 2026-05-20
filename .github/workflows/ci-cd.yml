@@ -1,0 +1,168 @@
+# =============================================================================
+# .github/workflows/ci-cd.yml
+#
+# CI/CD pipeline for CyberdeckCSS360.
+# Triggers on every push/PR to main.
+#
+# Relationship to existing main.yml:
+#   main.yml  — auto-formats code (Black, Isort, Prettier). Runs first.
+#   ci-cd.yml — lints, tests, builds, and deploys. Runs after formatting.
+#
+# Job order: static-analysis → test → build-and-deploy
+# =============================================================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Needed so the build-and-deploy job can write to the repo if required
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # JOB 1: Static Analysis (lint — separate from the auto-formatter in main.yml)
+  # ---------------------------------------------------------------------------
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Python: pylint + flake8 ─────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint flake8
+          pip install -r api/requirements.txt
+
+      - name: Run pylint
+        run: pylint api/*.py --fail-under=7.0 --disable=C0114,C0115,C0116
+
+      - name: Run flake8
+        run: flake8 api/*.py --max-line-length=120
+
+      # ── JavaScript: ESLint ──────────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ---------------------------------------------------------------------------
+  # JOB 2: Tests (unit, integration, smoke)
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: static-analysis   # don't bother testing if lint fails
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python test dependencies
+        run: |
+          pip install pytest pytest-cov
+          pip install -r api/requirements.txt
+
+      # Unit + integration tests via pytest
+      - name: Run unit + integration tests
+        env:
+          SPOTIPY_CLIENT_ID: ${{ secrets.SPOTIPY_CLIENT_ID }}
+          SPOTIPY_CLIENT_SECRET: ${{ secrets.SPOTIPY_CLIENT_SECRET }}
+          SPOTIPY_REDIRECT_URI: http://localhost:5000/callback
+          FLASK_ENV: testing
+        run: python -m pytest api/tests/ -v --tb=short --cov=api
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # Vite build acts as the frontend smoke test — if JSX/imports are broken it fails here
+      - name: Frontend smoke test (vite build)
+        run: npm run build
+
+  # ---------------------------------------------------------------------------
+  # JOB 3: Build Docker image & Deploy  (push to main only, not on PRs)
+  # ---------------------------------------------------------------------------
+  build-and-deploy:
+    name: Build Docker Image & Deploy
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t cyberdeckcss360:latest .
+
+      # ── Deploy via SSH to a remote server ───────────────────────────────────
+      # Uncomment this block and add SERVER_HOST, SERVER_USER, SSH_PRIVATE_KEY
+      # to Settings → Secrets and variables → Actions.
+      #
+      # - name: Deploy to production server
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.SERVER_HOST }}
+      #     username: ${{ secrets.SERVER_USER }}
+      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     script: |
+      #       cd /opt/CyberdeckCSS360
+      #       git pull origin main
+      #       docker compose down
+      #       docker compose up -d --build
+
+      # ── Local / self-hosted runner deploy (default for class project) ───────
+      - name: Deploy with docker-compose
+        run: |
+          docker compose up -d
+          echo "Containers started."
+
+      - name: Verify deployment (health check)
+        run: |
+          echo "Waiting for server to start..."
+          for i in $(seq 1 10); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/health || echo "000")
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✔ Deployment verified — HTTP $STATUS"
+              exit 0
+            fi
+            echo "  Attempt $i/10 — got $STATUS, retrying in 3s..."
+            sleep 3
+          done
+          echo "✘ Deployment verification failed"
+          docker compose logs
+          exit 1
