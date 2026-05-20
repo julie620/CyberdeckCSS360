@@ -39,7 +39,7 @@ function App() {
       const touch = event.touches?.[0];
       if (!touch) return;
       if (touch.clientY <= window.innerHeight / 3) {
-        setShowTabs(true);
+        setShowTabs(prev => !prev);
       }
     };
 
