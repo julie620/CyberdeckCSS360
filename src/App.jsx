@@ -36,7 +36,7 @@ function App() {
 
   useEffect(() => {
     const handleClick = (event) => {
-      if (event.clientY <= window.innerHeight / 3) {
+      if (event.clientY <= 100) {
         setShowTabs(prev => !prev);
       }
     };
