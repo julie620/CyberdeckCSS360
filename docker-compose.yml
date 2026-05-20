@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  cyberdeck:
+    build: .
+    image: cyberdeckcss360:latest
+    container_name: cyberdeck_app
+    ports:
+      - "5000:5000"   # Flask API (also serves built frontend)
+    env_file:
+      - api/.env      # SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, etc.
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
