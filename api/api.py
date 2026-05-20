@@ -7,7 +7,7 @@ allowing users to authenticate and control their Spotify playback.
 import os
 import random
 
-from flask import Flask, request, redirect, jsonify
+from flask import Flask, request, redirect, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 from spotipy import Spotify
@@ -16,7 +16,10 @@ from spotipy.cache_handler import CacheFileHandler
 
 load_dotenv()
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(__name__,static_folder=os.path.join(BASE_DIR, "../dist"),
+            static_url_path="")
 CORS(app, supports_credentials=True)
 
 
@@ -24,7 +27,7 @@ client_id = os.getenv('SPOTIPY_CLIENT_ID')
 client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
 
 FLASK_URL = 'http://127.0.0.1:5000'
-REACT_URL = os.getenv('REACT_URL')
+
 
 REDIRECT_URL = f"{FLASK_URL}/callback"
 SCOPE = (
@@ -50,21 +53,20 @@ sp_oauth = SpotifyOAuth(client_id,
 sp = Spotify(auth_manager=sp_oauth)
 
 
-@app.route('/')
-def home():
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
     """
-    Home route.
+    Serves the React frontend 
 
-    Redirects the user to Spotify authentication if they are not
-    authenticated. Otherwise, redirects to the React frontend.
+    Serves static files if exists, otherwise serves index.html
 
     Returns:
-        Response: Redirect response.
+        Response: Static file or index.html
     """
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        auth_url = sp_oauth.get_authorize_url()
-        return redirect(auth_url)
-    return redirect(REACT_URL)
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 
 @app.route('/login')
