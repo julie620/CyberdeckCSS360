@@ -35,16 +35,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const handleTouchStart = (event) => {
-      const touch = event.touches?.[0];
-      if (!touch) return;
-      if (touch.clientY <= window.innerHeight / 3) {
+    const handleClick = (event) => {
+      if (event.clientY <= window.innerHeight / 3) {
         setShowTabs(prev => !prev);
       }
     };
 
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    return () => window.removeEventListener("touchstart", handleTouchStart);
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
   }, []);
 
   const nowPlayingView = (() => {
