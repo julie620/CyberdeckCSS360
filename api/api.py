@@ -69,11 +69,17 @@ def serve_react(path):
     static = Path(app.static_folder).resolve()
     requested = (static / path).resolve()
 
-    if not str(requested).startswith(str(static)):
+    # Block path traversal and always fall back to index.html for React routes
+    try:
+        requested.relative_to(static)
+    except ValueError:
         return send_from_directory(app.static_folder, 'index.html')
 
-    if path and requested.exists():
-        return send_from_directory(app.static_folder, path)
+    if path and requested.is_file():
+        # Use the safe relative path, not the raw user input
+        safe_path = str(requested.relative_to(static))
+        return send_from_directory(app.static_folder, safe_path)
+
     return send_from_directory(app.static_folder, 'index.html')
 
 
