@@ -8,6 +8,7 @@ import os
 import random
 
 from flask import Flask, request, redirect, jsonify, send_from_directory
+from pathlib import Path
 from flask_cors import CORS
 from dotenv import load_dotenv
 from spotipy import Spotify
@@ -57,14 +58,21 @@ sp = Spotify(auth_manager=sp_oauth)
 @app.route('/<path:path>')
 def serve_react(path):
     """
-    Serves the React frontend 
+    Serves the React frontend.
 
-    Serves static files if exists, otherwise serves index.html
+    Serves static files if they exist within the static folder,
+    otherwise serves index.html. Prevents path traversal attacks.
 
     Returns:
         Response: Static file or index.html
     """
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
+    static = Path(app.static_folder).resolve()
+    requested = (static / path).resolve()
+
+    if not str(requested).startswith(str(static)):
+        return send_from_directory(app.static_folder, 'index.html')
+
+    if path and requested.exists():
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, 'index.html')
 
