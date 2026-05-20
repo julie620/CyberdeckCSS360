@@ -4,7 +4,7 @@ import "./Discover.css";
 
 function Discover() {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const reload = () => {
@@ -39,9 +39,6 @@ function Discover() {
           setLoading(false);
         }
       });
- 
-    setLoading(true);
-    setError(null);
  
     return () => {
       cancelled = true;
