@@ -195,14 +195,28 @@ body  {
     height: auto;
 }
 
-.tabs {
+.tabs-container {
   position: fixed;
   top: clamp(16px, 2vh, 24px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.tabs {
   display: flex;
   gap: 8px;
-  z-index: 100;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: all;
+}
+
+.tab-toggle {
+  position: absolute;
+  right: clamp(16px, 2vw, 32px);
+  pointer-events: all;
 }
 
 .tab {
