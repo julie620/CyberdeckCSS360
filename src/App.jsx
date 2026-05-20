@@ -6,6 +6,8 @@ import pauseButton from "./assets/pause.png";
 import nextButton from "./assets/next.png";
 import Tabs from "./Tabs";
 import Discover from "./Discover";
+import PlaylistBrowser from "./PlaylistBrowser";
+import AlbumBrowser from "./AlbumBrowser"
 
 const fmt = (ms) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -130,7 +132,10 @@ function App() {
   return (
     <>
       <Tabs active={activeTab} onChange={setActiveTab} />
-      {activeTab === "now-playing" ? nowPlayingView : <Discover />}
+      {activeTab === "now-playing" && nowPlayingView}
+      {activeTab === "discover" && <Discover />}
+      {activeTab === "playlists" && <PlaylistBrowser />}
+      {activeTab === "albums" && <AlbumBrowser />}
     </>
   );
 }

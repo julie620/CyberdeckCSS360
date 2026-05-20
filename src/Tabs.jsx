@@ -13,6 +13,18 @@ function Tabs({ active, onChange }) {
       >
         Discover
       </button>
+      <button
+        className={`tab ${active === "playlists" ? "active" : ""}`}
+        onClick={() => onChange("playlists")}
+      >
+        Playlists
+      </button>
+      <button
+        className={`tab ${active === "albums" ? "active" : ""}`}
+        onClick={() => onChange("albums")}
+      >
+        Albums
+      </button>
     </div>
   );
 }
