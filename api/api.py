@@ -402,5 +402,7 @@ def auth_status():
     authenticated = sp_oauth.validate_token(cache_handler.get_cached_token())
     return jsonify({"authenticated": bool(authenticated)})
 
+
+
 if __name__ == '__main__':
     app.run(debug=True)
