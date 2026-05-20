@@ -372,7 +372,7 @@ def get_albums():
         )
     return jsonify({"auth_required": False, "albums": albums})
 
-    @app.route('/logout')
+@app.route('/logout')
 def logout():
     """
     Log the user out by clearing their cached Spotify token.
