@@ -372,5 +372,35 @@ def get_albums():
         )
     return jsonify({"auth_required": False, "albums": albums})
 
+    @app.route('/logout')
+def logout():
+    """
+    Log the user out by clearing their cached Spotify token.
+
+    Removes stored user credentials so their data is no longer
+    accessible from this device. Redirects to login.
+
+    Returns:
+        Response: Redirect to the Spotify login page.
+    """
+    if os.path.exists('.spotify_cache'):
+        os.remove('.spotify_cache')
+    return jsonify({"success": True, "message": "Logged out successfully"})
+
+
+@app.route('/auth-status')
+def auth_status():
+    """
+    Check whether the current user is authenticated.
+
+    Allows the frontend to verify session state without
+    exposing any token data or user credentials.
+
+    Returns:
+        Response: JSON response with authenticated status only.
+    """
+    authenticated = sp_oauth.validate_token(cache_handler.get_cached_token())
+    return jsonify({"authenticated": bool(authenticated)})
+
 if __name__ == '__main__':
     app.run(debug=True)
