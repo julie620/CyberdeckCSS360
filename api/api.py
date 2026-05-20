@@ -40,7 +40,7 @@ SCOPE = (
     "user-library-read"
 )
 
-cache_handler = CacheFileHandler(cache_path='.spotify_cache')
+cache_handler = CacheFileHandler(cache_path=os.path.join(BASE_DIR, '.spotify_cache'))
 
 sp_oauth = SpotifyOAuth(client_id,
     client_secret,
@@ -98,10 +98,10 @@ def callback():
         return jsonify({"error": "No code returned from Spotify"}), 400
 
     sp_oauth.get_access_token(code)
-    return redirect(REACT_URL)
+    return redirect('/')
 
 
-@app.route('/playback')
+@app.route('/api/playback')
 def playback():
     """
     Retrieve current Spotify playback information.
@@ -137,7 +137,7 @@ def playback():
 
 
 
-@app.route('/playpause', methods=["POST"])
+@app.route('/api/playpause', methods=["POST"])
 def toggleplayback():
     """
     Toggle Spotify playback state.
@@ -162,7 +162,7 @@ def toggleplayback():
     })
 
 
-@app.route('/next', methods=["POST"])
+@app.route('/api/next', methods=["POST"])
 def skip_next():
     """
     Skip to the next Spotify track.
@@ -176,7 +176,7 @@ def skip_next():
     })
 
 
-@app.route('/previous', methods=["POST"])
+@app.route('/api/previous', methods=["POST"])
 def skip_previous():
     """
     Skip to the previous Spotify track.
@@ -190,7 +190,7 @@ def skip_previous():
     })
 
 
-@app.route('/discover')
+@app.route('/api/discover')
 def discover():
     """
     Retrieve suggested tracks for the Discover page.
@@ -291,7 +291,7 @@ def discover():
         "suggestions": suggestions
     })
 
-@app.route("/playlists")
+@app.route("/api/playlists")
 def get_playlists():
     """
     Retrieves user's Spotify playlists
@@ -327,7 +327,7 @@ def get_playlists():
     return jsonify({"auth_required": False, "playlists": formatted_playlists})
 
 
-@app.route("/play-browse", methods=["POST"])
+@app.route("/api/play-browse", methods=["POST"])
 def play_playlist():
     """
     Start playback for Spotify playlist
@@ -340,7 +340,7 @@ def play_playlist():
     return jsonify({"success": True})
 
 
-@app.route("/albums")
+@app.route("/api/albums")
 def get_albums():
     """
     Retrieves user's Saved Albums
@@ -374,7 +374,7 @@ def get_albums():
         )
     return jsonify({"auth_required": False, "albums": albums})
 
-@app.route('/logout')
+@app.route('/api/logout')
 def logout():
     """
     Log the user out by clearing their cached Spotify token.
@@ -390,7 +390,7 @@ def logout():
     return jsonify({"success": True, "message": "Logged out successfully"})
 
 
-@app.route('/auth-status')
+@app.route('/api/auth-status')
 def auth_status():
     """
     Check whether the current user is authenticated.

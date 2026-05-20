@@ -17,6 +17,7 @@ const fmt = (ms) => {
 function App() {
   const [activeTab, setActiveTab] = useState("now-playing");
   const [currentPlayback, setPlayback] = useState(null);
+  const [showTabs, setShowTabs] = useState(false);
 
   useEffect(() => {
     const fetchPlayback = () => {
@@ -31,6 +32,19 @@ function App() {
     fetchPlayback();
     const interval = setInterval(fetchPlayback, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleTouchStart = (event) => {
+      const touch = event.touches?.[0];
+      if (!touch) return;
+      if (touch.clientY <= window.innerHeight / 3) {
+        setShowTabs(true);
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    return () => window.removeEventListener("touchstart", handleTouchStart);
   }, []);
 
   const nowPlayingView = (() => {
@@ -131,7 +145,7 @@ function App() {
 
   return (
     <>
-      <Tabs active={activeTab} onChange={setActiveTab} />
+      {showTabs && <Tabs active={activeTab} onChange={setActiveTab} />}
       {activeTab === "now-playing" && nowPlayingView}
       {activeTab === "discover" && <Discover />}
       {activeTab === "playlists" && <PlaylistBrowser />}
