@@ -1,0 +1,70 @@
+# =============================================================================
+# .github/workflows/main.yml
+#
+# Auto-formats code on every push/PR to main.
+# - Python: Black (formatting) + Isort (import sorting)
+# - JavaScript/React: Prettier
+#
+# Fixes applied vs original PR #5:
+#   - Added permissions: contents: write  (fixes the commit/push failure)
+#   - Ignores package-lock.json via .prettierignore (add that file to repo root)
+# =============================================================================
+
+name: Code Formatter
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Required so the workflow can commit formatted changes back to the branch
+permissions:
+  contents: write
+
+jobs:
+  format:
+    name: Auto-format Python and Node.js
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Use the PR head ref so commits go back to the right branch
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      # ── Python: Black + Isort ───────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Black and Isort
+        run: pip install black isort
+
+      - name: Run Isort (import sorting)
+        run: isort api/ --profile black
+
+      - name: Run Black (code formatting)
+        run: black api/
+
+      # ── JavaScript/React: Prettier ──────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Run Prettier
+        run: npx prettier --write "src/**/*.{js,jsx,css}"
+
+      # ── Commit and push any formatting changes ──────────────────────────────
+      - name: Commit and push formatted changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-format code"
+          commit_options: "--no-verify"
