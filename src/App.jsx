@@ -17,7 +17,6 @@ const fmt = (ms) => {
 function App() {
   const [activeTab, setActiveTab] = useState("now-playing");
   const [currentPlayback, setPlayback] = useState(null);
-  const [showTabs, setShowTabs] = useState(false);
 
   useEffect(() => {
     const fetchPlayback = () => {
@@ -32,17 +31,6 @@ function App() {
     fetchPlayback();
     const interval = setInterval(fetchPlayback, 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const handleClick = (event) => {
-      if (event.clientY <= 100) {
-        setShowTabs(prev => !prev);
-      }
-    };
-
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
   }, []);
 
   const nowPlayingView = (() => {
@@ -143,7 +131,7 @@ function App() {
 
   return (
     <>
-      {showTabs && <Tabs active={activeTab} onChange={setActiveTab} />}
+      <Tabs active={activeTab} onChange={setActiveTab} />
       {activeTab === "now-playing" && nowPlayingView}
       {activeTab === "discover" && <Discover />}
       {activeTab === "playlists" && <PlaylistBrowser />}
