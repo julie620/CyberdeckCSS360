@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import TrackCard from "./TrackCard";
 import "./Discover.css";
 
@@ -7,7 +7,7 @@ function Discover() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     setError(null);
     fetch("/api/discover", { credentials: "include" })
@@ -20,9 +20,9 @@ function Discover() {
         setError(err.message);
         setLoading(false);
       });
-  };
+  }, []);
 
-  useEffect(load, []);
+  useEffect(load, [load]);
 
   if (loading && !data) {
     return (
@@ -36,7 +36,7 @@ function Discover() {
     return (
       <div className="discover">
         <div className="discover-state">
-          <p>Couldn't load suggestions.</p>
+          <p>Couldn’t load suggestions.</p>
           <button onClick={load}>Try again</button>
         </div>
       </div>
@@ -59,7 +59,7 @@ function Discover() {
     return (
       <div className="discover">
         <div className="discover-state">
-          Couldn't load suggestions yet, play some music on Spotify first.
+          Couldn’t load suggestions yet, play some music on Spotify first.
         </div>
       </div>
     );
