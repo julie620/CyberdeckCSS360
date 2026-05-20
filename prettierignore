@@ -1,0 +1,7 @@
+# Ignore generated/lock files — Prettier should not touch these
+package-lock.json
+node_modules/
+dist/
+api/venv/
+*.min.js
+*.min.css
