@@ -22,6 +22,7 @@ function Discover() {
       });
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [load]);
 
   if (loading && !data) {
