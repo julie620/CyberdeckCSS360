@@ -61,6 +61,31 @@ sudo reboot
 
 The app will launch automatically on every boot.
 
+**Running on Desktop**
+
+**1. Clone the repo**
+```bash
+git clone https://github.com/yourusername/CyberdeckCSS360.git
+cd CyberdeckCSS360
+```
+**2. Build the frontend**
+```bash
+npm install
+npm run build
+```
+
+**3. Set up Python**
+```bash
+cd api
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 api.py
+```
+
+Open http://127.0.0.1:5000 in browser
+
+
 ### Spotify Setup
 Make sure `http://127.0.0.1:5000/callback` is added as a redirect URI in your 
 [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
