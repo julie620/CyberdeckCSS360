@@ -19,7 +19,6 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-
 client_id = os.getenv('SPOTIPY_CLIENT_ID')
 client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
 
@@ -39,7 +38,8 @@ SCOPE = (
 
 cache_handler = CacheFileHandler(cache_path='.spotify_cache')
 
-sp_oauth = SpotifyOAuth(client_id,
+sp_oauth = SpotifyOAuth(
+    client_id,
     client_secret,
     REDIRECT_URL,
     scope=SCOPE,
@@ -55,8 +55,8 @@ def home():
     """
     Home route.
 
-    Redirects the user to Spotify authentication if they are not
-    authenticated. Otherwise, redirects to the React frontend.
+    Redirects to Spotify auth if not authenticated,
+    otherwise redirects to the React frontend.
 
     Returns:
         Response: Redirect response.
@@ -84,9 +84,6 @@ def callback():
     """
     Handle Spotify OAuth callback.
 
-    Retrieves the authorization code, exchanges it for an access token,
-    and redirects the user to the React frontend.
-
     Returns:
         Response: Redirect or JSON error response.
     """
@@ -108,7 +105,7 @@ def playback():
         Response: JSON response containing playback information.
     """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        #auth_url = sp_oauth.get_authorize_url()
+        # auth_url = sp_oauth.get_authorize_url()
         return jsonify({
             "auth_required": True,
             "auth_url": f"{FLASK_URL}/login"
@@ -134,14 +131,10 @@ def playback():
     })
 
 
-
 @app.route('/playpause', methods=["POST"])
 def toggleplayback():
     """
     Toggle Spotify playback state.
-
-    Pauses playback if music is currently playing,
-    otherwise resumes playback.
 
     Returns:
         Response: JSON success response.
@@ -150,14 +143,10 @@ def toggleplayback():
 
     if playback_info and playback_info["is_playing"]:
         sp.pause_playback()
-        return jsonify({
-            "success": True
-        })
+        return jsonify({"success": True})
 
     sp.start_playback()
-    return jsonify({
-        "success": True
-    })
+    return jsonify({"success": True})
 
 
 @app.route('/next', methods=["POST"])
@@ -169,9 +158,7 @@ def skip_next():
         Response: JSON success response.
     """
     sp.next_track()
-    return jsonify({
-        "success": True
-    })
+    return jsonify({"success": True})
 
 
 @app.route('/previous', methods=["POST"])
@@ -183,9 +170,7 @@ def skip_previous():
         Response: JSON success response.
     """
     sp.previous_track()
-    return jsonify({
-        "success": True
-    })
+    return jsonify({"success": True})
 
 
 @app.route('/discover')
@@ -231,10 +216,7 @@ def discover():
         pass
 
     if not recent_seed_artists and not top_seed_artists:
-        return jsonify({
-            "auth_required": False,
-            "suggestions": []
-        })
+        return jsonify({"auth_required": False, "suggestions": []})
 
     for time_range in ("short_term", "medium_term", "long_term"):
         try:
@@ -267,7 +249,10 @@ def discover():
                     "id": t["id"],
                     "name": t["name"],
                     "artist": t["artists"][0]["name"],
-                    "cover_url": t["album"]["images"][0]["url"] if t["album"]["images"] else None,
+                    "cover_url": (
+                        t["album"]["images"][0]["url"]
+                        if t["album"]["images"] else None
+                    ),
                     "uri": t["uri"],
                     "source_artist": artist["name"]
                 })
@@ -284,25 +269,16 @@ def discover():
 
     random.shuffle(suggestions)
 
-    return jsonify({
-        "auth_required": False,
-        "suggestions": suggestions
-    })
+    return jsonify({"auth_required": False, "suggestions": suggestions})
+
 
 @app.route("/playlists")
 def get_playlists():
     """
-    Retrieves user's Spotify playlists
+    Retrieves user's Spotify playlists.
 
     Returns:
-        Response:
-            - whether user needs to authenticate
-            - login URL where user needs to authenticate
-            - a list of formatted playlist objects
-                - id
-                - name
-                - cover_url
-                - owner
+        Response: JSON with auth status and list of playlists.
     """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
@@ -328,10 +304,10 @@ def get_playlists():
 @app.route("/play-browse", methods=["POST"])
 def play_playlist():
     """
-    Start playback for Spotify playlist
+    Start playback for a Spotify playlist or album.
 
     Returns:
-        Response: JSON success response
+        Response: JSON success response.
     """
     data = request.json
     sp.start_playback(context_uri=data["context_uri"])
@@ -341,18 +317,10 @@ def play_playlist():
 @app.route("/albums")
 def get_albums():
     """
-    Retrieves user's Saved Albums
+    Retrieves user's saved albums.
 
     Returns:
-        Response:
-            - whether user needs to authenticate
-            - login URL where user needs to authenticate
-            - a list of formatted album objects
-                - id
-                - name
-                - artist
-                - uri
-                - cover_url
+        Response: JSON with auth status and list of albums.
     """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
@@ -367,21 +335,21 @@ def get_albums():
                 "name": album["name"],
                 "artist": album["artists"][0]["name"],
                 "uri": album["uri"],
-                "cover_url": album["images"][0]["url"] if album.get("images") else None,
+                "cover_url": (
+                    album["images"][0]["url"] if album.get("images") else None
+                ),
             }
         )
     return jsonify({"auth_required": False, "albums": albums})
+
 
 @app.route('/logout')
 def logout():
     """
     Log the user out by clearing their cached Spotify token.
 
-    Removes stored user credentials so their data is no longer
-    accessible from this device. Redirects to login.
-
     Returns:
-        Response: Redirect to the Spotify login page.
+        Response: JSON success response.
     """
     if os.path.exists('.spotify_cache'):
         os.remove('.spotify_cache')
@@ -393,14 +361,12 @@ def auth_status():
     """
     Check whether the current user is authenticated.
 
-    Allows the frontend to verify session state without
-    exposing any token data or user credentials.
-
     Returns:
         Response: JSON response with authenticated status only.
     """
     authenticated = sp_oauth.validate_token(cache_handler.get_cached_token())
     return jsonify({"authenticated": bool(authenticated)})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
