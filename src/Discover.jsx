@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import TrackCard from "./TrackCard";
 import "./Discover.css";
 
@@ -6,24 +6,30 @@ function Discover() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError(null);
     fetch("/api/discover", { credentials: "include" })
       .then((res) => res.json())
       .then((d) => {
-        setData(d);
-        setLoading(false);
+        if (!cancelled) {
+          setData(d);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        if (!cancelled) {
+          setError(err.message);
+          setLoading(false);
+        }
       });
-  }, []);
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(); }, [load]);
+    return () => {
+      cancelled = true;
+    };
+  }, [retryCount]);
 
   if (loading && !data) {
     return (
@@ -38,7 +44,7 @@ function Discover() {
       <div className="discover">
         <div className="discover-state">
           <p>Couldn’t load suggestions.</p>
-          <button onClick={load}>Try again</button>
+          <button onClick={() => setRetryCount((c) => c + 1)}>Try again</button>
         </div>
       </div>
     );
