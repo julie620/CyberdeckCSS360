@@ -22,7 +22,7 @@ function Discover() {
       });
   }, []);
 
-  useEffect(load, [load]);
+  useEffect(() => { load(); }, [load]);
 
   if (loading && !data) {
     return (
