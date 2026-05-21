@@ -7,7 +7,8 @@ allowing users to authenticate and control their Spotify playback.
 import os
 import random
 
-from flask import Flask, request, redirect, jsonify
+from flask import Flask, request, redirect, jsonify, send_from_directory
+from pathlib import Path
 from flask_cors import CORS
 from dotenv import load_dotenv
 from spotipy import Spotify
@@ -16,14 +17,17 @@ from spotipy.cache_handler import CacheFileHandler
 
 load_dotenv()
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(__name__,static_folder=os.path.join(BASE_DIR, "../dist"),
+            static_url_path="")
 CORS(app, supports_credentials=True)
 
 client_id = os.getenv('SPOTIPY_CLIENT_ID')
 client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
 
 FLASK_URL = 'http://127.0.0.1:5000'
-REACT_URL = os.getenv('REACT_URL')
+
 
 REDIRECT_URL = f"{FLASK_URL}/callback"
 SCOPE = (
@@ -36,7 +40,7 @@ SCOPE = (
     "user-library-read"
 )
 
-cache_handler = CacheFileHandler(cache_path='.spotify_cache')
+cache_handler = CacheFileHandler(cache_path=os.path.join(BASE_DIR, '.spotify_cache'))
 
 sp_oauth = SpotifyOAuth(
     client_id,
@@ -50,21 +54,29 @@ sp_oauth = SpotifyOAuth(
 sp = Spotify(auth_manager=sp_oauth)
 
 
-@app.route('/')
-def home():
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
     """
-    Home route.
+    Serves the React frontend.
 
-    Redirects to Spotify auth if not authenticated,
-    otherwise redirects to the React frontend.
+    Serves static files if they exist within the static folder,
+    otherwise serves index.html. Prevents path traversal attacks.
 
     Returns:
-        Response: Redirect response.
+        Response: Static file or index.html
     """
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        auth_url = sp_oauth.get_authorize_url()
-        return redirect(auth_url)
-    return redirect(REACT_URL)
+    static_folder = os.path.realpath(app.static_folder)
+    fullpath = os.path.normpath(os.path.join(static_folder, path))
+
+    if not fullpath.startswith(static_folder):
+        return send_from_directory(app.static_folder, 'index.html')
+
+    if path and os.path.isfile(fullpath):
+        safe_path = os.path.relpath(fullpath, static_folder)
+        return send_from_directory(app.static_folder, safe_path)
+
+    return send_from_directory(app.static_folder, 'index.html')
 
 
 @app.route('/login')
@@ -93,10 +105,10 @@ def callback():
         return jsonify({"error": "No code returned from Spotify"}), 400
 
     sp_oauth.get_access_token(code)
-    return redirect(REACT_URL)
+    return redirect('/')
 
 
-@app.route('/playback')
+@app.route('/api/playback')
 def playback():
     """
     Retrieve current Spotify playback information.
@@ -131,7 +143,8 @@ def playback():
     })
 
 
-@app.route('/playpause', methods=["POST"])
+
+@app.route('/api/playpause', methods=["POST"])
 def toggleplayback():
     """
     Toggle Spotify playback state.
@@ -149,7 +162,7 @@ def toggleplayback():
     return jsonify({"success": True})
 
 
-@app.route('/next', methods=["POST"])
+@app.route('/api/next', methods=["POST"])
 def skip_next():
     """
     Skip to the next Spotify track.
@@ -161,7 +174,7 @@ def skip_next():
     return jsonify({"success": True})
 
 
-@app.route('/previous', methods=["POST"])
+@app.route('/api/previous', methods=["POST"])
 def skip_previous():
     """
     Skip to the previous Spotify track.
@@ -173,7 +186,7 @@ def skip_previous():
     return jsonify({"success": True})
 
 
-@app.route('/discover')
+@app.route('/api/discover')
 def discover():
     """
     Retrieve suggested tracks for the Discover page.
@@ -272,7 +285,7 @@ def discover():
     return jsonify({"auth_required": False, "suggestions": suggestions})
 
 
-@app.route("/playlists")
+@app.route("/api/playlists")
 def get_playlists():
     """
     Retrieves user's Spotify playlists.
@@ -301,7 +314,7 @@ def get_playlists():
     return jsonify({"auth_required": False, "playlists": formatted_playlists})
 
 
-@app.route("/play-browse", methods=["POST"])
+@app.route("/api/play-browse", methods=["POST"])
 def play_playlist():
     """
     Start playback for a Spotify playlist or album.
@@ -314,7 +327,7 @@ def play_playlist():
     return jsonify({"success": True})
 
 
-@app.route("/albums")
+@app.route("/api/albums")
 def get_albums():
     """
     Retrieves user's saved albums.
@@ -342,8 +355,7 @@ def get_albums():
         )
     return jsonify({"auth_required": False, "albums": albums})
 
-
-@app.route('/logout')
+@app.route('/api/logout')
 def logout():
     """
     Log the user out by clearing their cached Spotify token.
@@ -356,7 +368,7 @@ def logout():
     return jsonify({"success": True, "message": "Logged out successfully"})
 
 
-@app.route('/auth-status')
+@app.route('/api/auth-status')
 def auth_status():
     """
     Check whether the current user is authenticated.
