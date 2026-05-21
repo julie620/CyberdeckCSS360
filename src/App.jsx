@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import previousButton from "./assets/previous.png";
 import playButton from "./assets/play.png";
@@ -7,7 +7,7 @@ import nextButton from "./assets/next.png";
 import Tabs from "./Tabs";
 import Discover from "./Discover";
 import PlaylistBrowser from "./PlaylistBrowser";
-import AlbumBrowser from "./AlbumBrowser"
+import AlbumBrowser from "./AlbumBrowser";
 
 const fmt = (ms) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -31,6 +31,27 @@ function App() {
     fetchPlayback();
     const interval = setInterval(fetchPlayback, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  const togglePlayback = useCallback(async () => {
+    await fetch("/api/playpause", {
+      credentials: "include",
+      method: "POST",
+    });
+  }, []);
+
+  const skipNext = useCallback(async () => {
+    await fetch("/api/next", {
+      credentials: "include",
+      method: "POST",
+    });
+  }, []);
+
+  const skipPrevious = useCallback(async () => {
+    await fetch("/api/previous", {
+      credentials: "include",
+      method: "POST",
+    });
   }, []);
 
   const nowPlayingView = (() => {
@@ -59,27 +80,6 @@ function App() {
       (currentPlayback.progress_ms / Math.max(1, currentPlayback.duration_ms)) *
         100,
     );
-
-    const togglePlayback = async () => {
-      await fetch("/api/playpause", {
-        credentials: "include",
-        method: "POST",
-      });
-    };
-
-    const skipNext = async () => {
-      await fetch("/api/next", {
-        credentials: "include",
-        method: "POST",
-      });
-    };
-
-    const skipPrevious = async () => {
-      await fetch("/api/previous", {
-        credentials: "include",
-        method: "POST",
-      });
-    };
 
     return (
       <div className="now-playing">

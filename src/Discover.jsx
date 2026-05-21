@@ -6,23 +6,30 @@ function Discover() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const load = () => {
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError(null);
     fetch("/api/discover", { credentials: "include" })
       .then((res) => res.json())
       .then((d) => {
-        setData(d);
-        setLoading(false);
+        if (!cancelled) {
+          setData(d);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        if (!cancelled) {
+          setError(err.message);
+          setLoading(false);
+        }
       });
-  };
-
-  useEffect(load, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [retryCount]);
 
   if (loading && !data) {
     return (
@@ -36,8 +43,8 @@ function Discover() {
     return (
       <div className="discover">
         <div className="discover-state">
-          <p>Couldn't load suggestions.</p>
-          <button onClick={load}>Try again</button>
+          <p>Couldn’t load suggestions.</p>
+          <button onClick={() => setRetryCount((c) => c + 1)}>Try again</button>
         </div>
       </div>
     );
@@ -59,7 +66,7 @@ function Discover() {
     return (
       <div className="discover">
         <div className="discover-state">
-          Couldn't load suggestions yet, play some music on Spotify first.
+          Couldn’t load suggestions yet, play some music on Spotify first.
         </div>
       </div>
     );
