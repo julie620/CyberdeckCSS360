@@ -288,3 +288,131 @@ class TestAuthStatusRoute:
         oauth.validate_token.return_value = True
         data = json.loads(client.get("/auth-status").data)
         assert "access_token" not in data and "refresh_token" not in data
+
+
+class TestPlayTrackRoute:
+    def test_play_track_success(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/play-track",
+            json={"uri": "spotify:track:abc123"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert json.loads(resp.data).get("success") is True
+        sp.start_playback.assert_called_once_with(uris=["spotify:track:abc123"])
+
+    def test_play_track_missing_uri(self, client, oauth):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/play-track",
+            json={},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert "error" in json.loads(resp.data)
+
+    def test_play_track_unauthenticated(self, client, oauth):
+        oauth.validate_token.return_value = False
+        resp = client.post(
+            "/api/play-track",
+            json={"uri": "spotify:track:abc123"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 401
+        assert json.loads(resp.data).get("auth_required") is True
+
+    def test_play_track_spotify_error(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        sp.start_playback.side_effect = Exception("No active device")
+        resp = client.post(
+            "/api/play-track",
+            json={"uri": "spotify:track:abc123"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 502
+        assert "error" in json.loads(resp.data)
+
+
+class TestAddToQueueRoute:
+    def test_add_to_queue_success(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/queue",
+            json={"uri": "spotify:track:xyz789"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert json.loads(resp.data).get("success") is True
+        sp.add_to_queue.assert_called_once_with("spotify:track:xyz789")
+
+    def test_add_to_queue_missing_uri(self, client, oauth):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/queue",
+            json={},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+
+    def test_add_to_queue_unauthenticated(self, client, oauth):
+        oauth.validate_token.return_value = False
+        resp = client.post(
+            "/api/queue",
+            json={"uri": "spotify:track:xyz789"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 401
+        assert json.loads(resp.data).get("auth_required") is True
+
+    def test_add_to_queue_spotify_error(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        sp.add_to_queue.side_effect = Exception("No active device")
+        resp = client.post(
+            "/api/queue",
+            json={"uri": "spotify:track:xyz789"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 502
+
+
+class TestAddToPlaylistRoute:
+    def test_add_to_playlist_success(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/playlists/pl_001/add",
+            json={"uri": "spotify:track:abc"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert json.loads(resp.data).get("success") is True
+        sp.playlist_add_items.assert_called_once_with("pl_001", ["spotify:track:abc"])
+
+    def test_add_to_playlist_missing_uri(self, client, oauth):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/playlists/pl_001/add",
+            json={},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+
+    def test_add_to_playlist_unauthenticated(self, client, oauth):
+        oauth.validate_token.return_value = False
+        resp = client.post(
+            "/api/playlists/pl_001/add",
+            json={"uri": "spotify:track:abc"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 401
+
+    def test_add_to_playlist_spotify_error(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        sp.playlist_add_items.side_effect = Exception("Forbidden")
+        resp = client.post(
+            "/api/playlists/pl_001/add",
+            json={"uri": "spotify:track:abc"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 502
+
