@@ -8,7 +8,6 @@ import os
 import random
 
 from flask import Flask, request, redirect, jsonify, send_from_directory
-from pathlib import Path
 from flask_cors import CORS
 from dotenv import load_dotenv
 from spotipy import Spotify
@@ -19,7 +18,7 @@ load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-app = Flask(__name__,static_folder=os.path.join(BASE_DIR, "../dist"),
+app = Flask(__name__, static_folder=os.path.join(BASE_DIR, "../dist"),
             static_url_path="")
 CORS(app, supports_credentials=True)
 
@@ -143,7 +142,6 @@ def playback():
         "message": "No track currently playing",
         "is_playing": False
     })
-
 
 
 @app.route('/api/playpause', methods=["POST"])
@@ -369,8 +367,9 @@ def play_track():
     try:
         sp.start_playback(uris=[uri])
         return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 502
+    except Exception:
+        app.logger.exception("Failed to start playback for track")
+        return jsonify({"error": "Upstream Spotify error"}), 502
 
 
 @app.route('/api/queue', methods=["POST"])
@@ -384,8 +383,9 @@ def add_to_queue():
     try:
         sp.add_to_queue(uri)
         return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 502
+    except Exception:
+        app.logger.exception("Failed to add track to queue")
+        return jsonify({"error": "Upstream Spotify error"}), 502
 
 
 @app.route('/api/playlists/<playlist_id>/add', methods=["POST"])
@@ -399,8 +399,9 @@ def add_to_playlist(playlist_id):
     try:
         sp.playlist_add_items(playlist_id, [uri])
         return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 502
+    except Exception:
+        app.logger.exception("Failed to add track to playlist")
+        return jsonify({"error": "Upstream Spotify error"}), 502
 
 
 @app.route('/api/logout')

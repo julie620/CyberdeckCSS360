@@ -415,4 +415,3 @@ class TestAddToPlaylistRoute:
             content_type="application/json",
         )
         assert resp.status_code == 502
-
