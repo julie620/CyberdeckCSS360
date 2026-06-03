@@ -31,7 +31,9 @@ export default [
     },
 
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      // Classic hooks rules only - excludes React Compiler rules added in v7
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
 
       'react-refresh/only-export-components': [
         'warn',
