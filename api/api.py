@@ -388,6 +388,77 @@ def add_to_queue():
         return jsonify({"error": "Upstream Spotify error"}), 502
 
 
+@app.route('/api/queue', methods=["GET"])
+def get_queue():
+    """Get the user's current playback queue."""
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
+
+    try:
+        q = sp.queue()
+    except Exception:
+        return jsonify({"auth_required": False, "currently_playing": None, "items": []})
+
+    def fmt(t):
+        if not t:
+            return None
+        album = t.get("album") or {}
+        images = album.get("images") or []
+        artists = t.get("artists") or []
+        return {
+            "id": t.get("id"),
+            "name": t.get("name"),
+            "artist": artists[0]["name"] if artists else "",
+            "cover_url": images[0]["url"] if images else None,
+            "uri": t.get("uri"),
+            "duration_ms": t.get("duration_ms"),
+        }
+
+    current = fmt(q.get("currently_playing"))
+    if current:
+        try:
+            playback = sp.current_playback()
+            if playback:
+                current["progress_ms"] = playback.get("progress_ms")
+                current["is_playing"] = playback.get("is_playing", False)
+            else:
+                current["progress_ms"] = None
+                current["is_playing"] = False
+        except Exception:
+            current["progress_ms"] = None
+            current["is_playing"] = False
+
+    items = [fmt(t) for t in (q.get("queue") or []) if t]
+
+    return jsonify({
+        "auth_required": False,
+        "currently_playing": current,
+        "items": items,
+    })
+
+
+@app.route('/api/queue/skip-to', methods=["POST"])
+def skip_to_queue_position():
+    """Skip forward through the queue to reach a chosen upcoming track.
+
+    Spotify has no jump-to-index endpoint, so advance one track at a time.
+    """
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"}), 401
+    count = (request.json or {}).get("count")
+    if not isinstance(count, int) or count < 1:
+        return jsonify({"error": "count must be a positive integer"}), 400
+    if count > 50:
+        return jsonify({"error": "count too large"}), 400
+    try:
+        for _ in range(count):
+            sp.next_track()
+        return jsonify({"success": True})
+    except Exception:
+        app.logger.exception("Failed to skip to queue position")
+        return jsonify({"error": "Upstream Spotify error"}), 502
+
+
 @app.route('/api/playlists/<playlist_id>/add', methods=["POST"])
 def add_to_playlist(playlist_id):
     """Add a track to a specific playlist."""

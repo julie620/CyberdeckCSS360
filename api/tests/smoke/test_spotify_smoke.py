@@ -416,3 +416,132 @@ class TestAddToPlaylistRoute:
             content_type="application/json",
         )
         assert resp.status_code == 502
+
+
+FAKE_QUEUE = {
+    "currently_playing": {
+        "id": "cur1",
+        "name": "Now Track",
+        "uri": "spotify:track:cur1",
+        "duration_ms": 200_000,
+        "artists": [{"name": "Now Artist"}],
+        "album": {"images": [{"url": "http://example.com/now.jpg"}]},
+    },
+    "queue": [
+        {
+            "id": "q1",
+            "name": "Queued 1",
+            "uri": "spotify:track:q1",
+            "duration_ms": 180_000,
+            "artists": [{"name": "QA1"}],
+            "album": {"images": [{"url": "http://example.com/q1.jpg"}]},
+        },
+        {
+            "id": "q2",
+            "name": "Queued 2",
+            "uri": "spotify:track:q2",
+            "duration_ms": 240_000,
+            "artists": [{"name": "QA2"}],
+            "album": {"images": [{"url": "http://example.com/q2.jpg"}]},
+        },
+    ],
+}
+
+
+class TestGetQueueRoute:
+    def test_get_queue_with_items(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        sp.queue.return_value = FAKE_QUEUE
+        sp.current_playback.return_value = {
+            "progress_ms": 45_000,
+            "is_playing": True,
+        }
+        resp = client.get("/api/queue")
+        assert resp.status_code == 200
+        data = json.loads(resp.data)
+        assert data.get("auth_required") is False
+        assert data["currently_playing"]["name"] == "Now Track"
+        assert data["currently_playing"]["progress_ms"] == 45_000
+        assert data["currently_playing"]["is_playing"] is True
+        assert len(data["items"]) == 2
+        assert data["items"][0]["name"] == "Queued 1"
+        for k in ("id", "name", "artist", "cover_url", "uri"):
+            assert k in data["items"][0]
+
+    def test_get_queue_nothing_playing(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        sp.queue.return_value = {"currently_playing": None, "queue": []}
+        resp = client.get("/api/queue")
+        assert resp.status_code == 200
+        data = json.loads(resp.data)
+        assert data.get("currently_playing") is None
+        assert data["items"] == []
+
+    def test_get_queue_unauthenticated(self, client, oauth):
+        oauth.validate_token.return_value = False
+        data = json.loads(client.get("/api/queue").data)
+        assert data.get("auth_required") is True
+
+    def test_get_queue_spotify_error(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        sp.queue.side_effect = Exception("Boom")
+        resp = client.get("/api/queue")
+        assert resp.status_code == 200
+        data = json.loads(resp.data)
+        assert data.get("currently_playing") is None
+        assert data["items"] == []
+
+
+class TestSkipToQueueRoute:
+    def test_skip_to_success(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/queue/skip-to",
+            json={"count": 3},
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert json.loads(resp.data).get("success") is True
+        assert sp.next_track.call_count == 3
+
+    def test_skip_to_invalid_count(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        for bad in ({"count": 0}, {"count": -2}, {"count": "x"}, {}):
+            resp = client.post(
+                "/api/queue/skip-to",
+                json=bad,
+                content_type="application/json",
+            )
+            assert resp.status_code == 400
+        sp.next_track.assert_not_called()
+
+    def test_skip_to_count_too_large(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        resp = client.post(
+            "/api/queue/skip-to",
+            json={"count": 999},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        sp.next_track.assert_not_called()
+
+    def test_skip_to_unauthenticated(self, client, oauth):
+        oauth.validate_token.return_value = False
+        resp = client.post(
+            "/api/queue/skip-to",
+            json={"count": 2},
+            content_type="application/json",
+        )
+        assert resp.status_code == 401
+        assert json.loads(resp.data).get("auth_required") is True
+
+    def test_skip_to_spotify_error(self, client, oauth, sp):
+        oauth.validate_token.return_value = True
+        sp.next_track.side_effect = Exception("No active device")
+        resp = client.post(
+            "/api/queue/skip-to",
+            json={"count": 2},
+            content_type="application/json",
+        )
+        assert resp.status_code == 502
+        assert "error" in json.loads(resp.data)

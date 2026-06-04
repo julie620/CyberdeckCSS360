@@ -8,6 +8,7 @@ import Tabs from "./Tabs";
 import Discover from "./Discover";
 import PlaylistBrowser from "./PlaylistBrowser";
 import AlbumBrowser from "./AlbumBrowser";
+import TrackCard from "./TrackCard";
 
 const fmt = (ms) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -17,6 +18,8 @@ const fmt = (ms) => {
 function App() {
   const [activeTab, setActiveTab] = useState("now-playing");
   const [currentPlayback, setPlayback] = useState(null);
+  const [showQueue, setShowQueue] = useState(false);
+  const [queueItems, setQueueItems] = useState([]);
 
   useEffect(() => {
     const fetchPlayback = () => {
@@ -32,6 +35,25 @@ function App() {
     const interval = setInterval(fetchPlayback, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!showQueue) return;
+    let cancelled = false;
+    const fetchQueue = () => {
+      fetch("/api/queue", { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled) setQueueItems(data.items || []);
+        })
+        .catch(() => {});
+    };
+    fetchQueue();
+    const interval = setInterval(fetchQueue, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [showQueue]);
 
   const togglePlayback = useCallback(async () => {
     await fetch("/api/playpause", {
@@ -52,6 +74,20 @@ function App() {
       credentials: "include",
       method: "POST",
     });
+  }, []);
+
+  const jumpToTrack = useCallback(async (index) => {
+    const res = await fetch("/api/queue/skip-to", {
+      credentials: "include",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ count: index + 1 }),
+    });
+    if (!res.ok) return;
+    const data = await fetch("/api/queue", { credentials: "include" })
+      .then((r) => r.json())
+      .catch(() => null);
+    if (data) setQueueItems(data.items || []);
   }, []);
 
   const nowPlayingView = (() => {
@@ -82,7 +118,7 @@ function App() {
     );
 
     return (
-      <div className="now-playing">
+      <div className={`now-playing${showQueue ? " queue-open" : ""}`}>
         <div className="device">
           <div className="cover">
             <img src={currentPlayback.cover_URL} alt="album cover" />
@@ -133,6 +169,41 @@ function App() {
     <>
       <Tabs active={activeTab} onChange={setActiveTab} />
       {activeTab === "now-playing" && nowPlayingView}
+      {activeTab === "now-playing" && (
+        <>
+          <button
+            className="queue-toggle-btn"
+            onClick={() => setShowQueue((v) => !v)}
+          >
+            {showQueue ? "Hide Queue" : "Show Queue"}
+          </button>
+          {showQueue && (
+            <div className="queue-drawer">
+              <h2 className="queue-drawer-title">Up Next</h2>
+              {queueItems.length === 0 ? (
+                <div className="queue-drawer-empty">Queue is empty</div>
+              ) : (
+                <div className="queue-drawer-list">
+                  {queueItems.map((t, i) => (
+                    <button
+                      key={`${t.id}-${i}`}
+                      className="queue-jump"
+                      onClick={() => jumpToTrack(i)}
+                      title="Jump to this track"
+                    >
+                      <TrackCard
+                        cover_url={t.cover_url}
+                        name={t.name}
+                        subtitle={t.artist}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
       {activeTab === "discover" && <Discover />}
       {activeTab === "playlists" && <PlaylistBrowser />}
       {activeTab === "albums" && <AlbumBrowser />}
