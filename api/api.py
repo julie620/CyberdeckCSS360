@@ -118,7 +118,6 @@ def playback():
         Response: JSON response containing playback information.
     """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        # auth_url = sp_oauth.get_authorize_url()
         return jsonify({
             "auth_required": True,
             "auth_url": f"{FLASK_URL}/login"
@@ -129,27 +128,28 @@ def playback():
     if playback_info and playback_info.get("item"):
         return jsonify({
             "auth_required": False,
-            "track_name": playback_info["item"]["name"],
-            "artist_name": playback_info["item"]["artists"][0]["name"],
-            "is_playing": playback_info["is_playing"],
-            "progress_ms": playback_info["progress_ms"],
-            "duration_ms": playback_info["item"]["duration_ms"],
-            "cover_URL": playback_info["item"]["album"]["images"][0]["url"]
+            "track_name": playback_info["item"].get("name", "Unknown"),
+            "artist_name": playback_info["item"].get("artists", [{}])[0].get("name", "Unknown"),
+            "is_playing": playback_info.get("is_playing", False),
+            "progress_ms": playback_info.get("progress_ms", 0),
+            "duration_ms": playback_info["item"].get("duration_ms", 0),
+            "cover_URL": playback_info["item"].get("album", {}).get("images", [{}])[0].get("url", None)
         })
 
     last_track_played = sp.current_user_recently_played(limit=1)
-    if last_track_played and last_track_played["items"]:
+    if last_track_played and last_track_played.get("items"):
         recent_item = last_track_played["items"][0]
-        track = recent_item["track"]
+        track = recent_item.get("track", {})
         return jsonify({
-                "auth_required": False,
-                "track_name": track["name"],
-                "artist_name": track["artists"][0]["name"],
-                "is_playing": False,
-                "progress_ms": 0,
-                "duration_ms": track["duration_ms"],
-                "cover_URL": track["album"]["images"][0]["url"]
-            })
+            "auth_required": False,
+            "track_name": track.get("name", "Unknown"),
+            "artist_name": track.get("artists", [{}])[0].get("name", "Unknown"),
+            "is_playing": False,
+            "progress_ms": 0,
+            "duration_ms": track.get("duration_ms", 0),
+            "cover_URL": track.get("album", {}).get("images", [{}])[0].get("url", None)
+        })
+
     return jsonify({"auth_required": False, "message": "No playback information available"})
 
 
