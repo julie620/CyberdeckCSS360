@@ -52,3 +52,15 @@ h1 {
 *::-webkit-scrollbar {
   display: none; /* Chrome/Safari/Chromium */
 }
+
+html, body {
+  overflow: hidden;
+  touch-action: pan-y pinch-zoom;
+}
+
+/* For any scrollable containers in your app */
+.scrollable {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
