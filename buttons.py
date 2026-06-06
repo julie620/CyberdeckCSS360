@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+import gpiod
 import requests
 import time
 
@@ -8,30 +8,36 @@ PREV_PIN = 17
 PLAY_PIN = 27
 NEXT_PIN = 22
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(PREV_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(PLAY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(NEXT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+def handle(pin):
+    if pin == PREV_PIN:
+        requests.post(f"{FLASK_URL}/api/previous")
+        print("Previous")
+    elif pin == PLAY_PIN:
+        requests.post(f"{FLASK_URL}/api/playpause")
+        print("Play/Pause")
+    elif pin == NEXT_PIN:
+        requests.post(f"{FLASK_URL}/api/next")
+        print("Next")
 
-def previous(channel):
-    requests.post(f"{FLASK_URL}/api/previous")
-    print("Previous")
+last = {PREV_PIN: 1, PLAY_PIN: 1, NEXT_PIN: 1}
 
-def playpause(channel):
-    requests.post(f"{FLASK_URL}/api/playpause")
-    print("Play/Pause")
-
-def next_track(channel):
-    requests.post(f"{FLASK_URL}/api/next")
-    print("Next")
-
-GPIO.add_event_detect(PREV_PIN, GPIO.FALLING, callback=previous, bouncetime=300)
-GPIO.add_event_detect(PLAY_PIN, GPIO.FALLING, callback=playpause, bouncetime=300)
-GPIO.add_event_detect(NEXT_PIN, GPIO.FALLING, callback=next_track, bouncetime=300)
-
-print("Button listener running...")
-try:
+with gpiod.request_lines(
+    '/dev/gpiochip0',
+    consumer="buttons",
+    config={
+        (PREV_PIN, PLAY_PIN, NEXT_PIN): gpiod.LineSettings(
+            direction=gpiod.line.Direction.INPUT,
+            bias=gpiod.line.Bias.PULL_UP,
+        )
+    }
+) as request:
+    print("Button listener running...")
     while True:
-        time.sleep(0.1)
-except KeyboardInterrupt:
-    GPIO.cleanup()
+        for pin in [PREV_PIN, PLAY_PIN, NEXT_PIN]:
+            val = request.get_value(pin)
+            int_val = 0 if val == gpiod.line.Value.INACTIVE else 1
+            if int_val == 0 and last[pin] == 1:
+                handle(pin)
+                time.sleep(0.3)
+            last[pin] = int_val
+        time.sleep(0.01)

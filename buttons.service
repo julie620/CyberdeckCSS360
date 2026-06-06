@@ -7,7 +7,7 @@ Requires=myapp.service
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/CyberdeckCSS360
-ExecStart=/home/pi/CyberdeckCSS360/api/venv/bin/python buttons.py
+ExecStart=/usr/bin/python3 -u /home/pi/CyberdeckCSS360/buttons.py
 Restart=on-failure
 RestartSec=5
 
