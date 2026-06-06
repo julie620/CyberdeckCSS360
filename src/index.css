@@ -43,3 +43,12 @@ h1 {
   color: var(--text-h);
   margin: 0;
 }
+
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Chromium */
+}
