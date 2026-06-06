@@ -126,6 +126,7 @@ def playback():
     playback_info = sp.current_playback()
 
     if playback_info and playback_info.get("item"):
+        cover_image = playback_info["item"].get("album", {}).get("images", [{}])
         return jsonify({
             "auth_required": False,
             "track_name": playback_info["item"].get("name", "Unknown"),
@@ -133,7 +134,7 @@ def playback():
             "is_playing": playback_info.get("is_playing", False),
             "progress_ms": playback_info.get("progress_ms", 0),
             "duration_ms": playback_info["item"].get("duration_ms", 0),
-            "cover_URL": playback_info["item"].get("album", {}).get("images", [{}])[0].get("url", None)
+            "cover_URL": cover_image[0].get("url", None) if cover_image else None
         })
 
     last_track_played = sp.current_user_recently_played(limit=1)
