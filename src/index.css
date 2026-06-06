@@ -22,19 +22,20 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html,
-body {
+html, body {
   margin: 0;
-  min-height: 100vh;
   width: 100vw;
-  overflow-x: hidden;
+  height: 100vh;
+  overflow: hidden;  
+  overscroll-behavior: none;
 }
 
 #root {
   width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
   margin: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 h1 {
@@ -44,23 +45,26 @@ h1 {
   margin: 0;
 }
 
+/* Hide scrollbars everywhere */
 * {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 *::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Chromium */
+  display: none;
 }
 
-html, body {
-  overflow: hidden;
-  touch-action: pan-y pinch-zoom;
-}
-
-/* For any scrollable containers in your app */
-.scrollable {
+/* Scrollable page containers */
+.discover,
+.browser {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  height: 100vh;
+  box-sizing: border-box;
 }
