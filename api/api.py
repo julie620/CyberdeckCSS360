@@ -510,5 +510,23 @@ def auth_status():
     return jsonify({"authenticated": bool(authenticated)})
 
 
+@app.route('/api/volume', methods=["POST"])
+def set_volume():
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        return jsonify({
+            "auth_required": True,
+            "auth_url": f"{FLASK_URL}/login"
+        })
+
+    data = request.get_json()
+    volume = data.get("volume")
+
+    if volume is None or not isinstance(volume, int) or not 0 <= volume <= 100:
+        return jsonify({"error": "Volume must be an integer between 0 and 100"}), 400
+
+    sp.volume(volume)
+    return jsonify({"success": True, "volume": volume})
+
+
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=5000)
