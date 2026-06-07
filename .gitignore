@@ -1,17 +1,36 @@
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# Python bytecode cache
+# Python
+api/venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 
-# Pytest cache
-.pytest_cache/
+# Environment variables
+api/.env
+.env
 
-#spotify credentials
+# Spotify cache - contains auth tokens
+api/.spotify_cache
 .spotify_cache
 
-#node packages
+# React/Vite build output - generated on each machine
+dist/
 node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
