@@ -240,3 +240,105 @@ body  {
   color: var(--bg);
   border-color: var(--text);
 }
+
+.queue-toggle-btn {
+  position: fixed;
+  bottom: clamp(20px, 3vh, 36px);
+  right: clamp(16px, 2vw, 32px);
+  z-index: 120;
+  background: var(--bg);
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-family: var(--heading);
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.queue-toggle-btn:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.queue-drawer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 110;
+  height: 46vh;
+  overflow-y: auto;
+  background: rgba(10, 10, 14, 0.96);
+  border-top: 1px solid var(--line);
+  padding: clamp(20px, 3vh, 32px) clamp(20px, 4vw, 64px) clamp(72px, 10vh, 96px);
+  box-sizing: border-box;
+  backdrop-filter: blur(8px);
+}
+
+.now-playing.queue-open {
+  height: 54vh;
+}
+
+.now-playing.queue-open .device {
+  height: 54vh;
+  grid-template-columns: min(42vh, 36vw) minmax(0, 1fr);
+  padding-top: clamp(16px, 2vh, 28px);
+  padding-bottom: clamp(12px, 2vh, 24px);
+}
+
+.now-playing.queue-open .meta {
+  margin-top: clamp(6px, 1.5vh, 18px);
+}
+
+.now-playing.queue-open .meta .title {
+  font-size: clamp(24px, 3.4vw, 48px);
+}
+
+.now-playing.queue-open .progress {
+  margin-top: clamp(12px, 2vh, 24px);
+}
+
+.now-playing.queue-open .controls {
+  margin-top: clamp(14px, 2.5vh, 32px);
+  min-height: auto;
+  align-self: end;
+  padding-bottom: clamp(8px, 1.5vh, 20px);
+}
+
+.queue-drawer-title {
+  margin: 0 0 16px;
+  font-size: clamp(20px, 2.4vw, 30px);
+}
+
+.queue-drawer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.queue-drawer-empty {
+  color: var(--dim);
+  font-size: 16px;
+  padding: 12px 0;
+}
+
+.queue-jump {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.queue-jump:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
