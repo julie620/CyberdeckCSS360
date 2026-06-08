@@ -365,6 +365,7 @@ def get_albums():
         )
     return jsonify({"auth_required": False, "albums": albums})
 
+
 @app.route("/api/albums/<album_id>/tracks")
 def get_album_tracks(album_id):
     """
@@ -394,7 +395,9 @@ def get_album_tracks(album_id):
                     "uri": t["uri"],
                     "duration_ms": t.get("duration_ms", 0),
                     "track_number": t.get("track_number", len(tracks) + 1),
-                    "artist": t_artists[0]["name"] if t_artists else artists[0]["name"] if artists else "Unknown",
+                    "artist": (t_artists[0]["name"] if t_artists 
+                               else artists[0]["name"] if artists 
+                               else "Unknown"),
                     "cover_url": images[0]["url"] if images else None,
                 })
             if not results.get("next"):
@@ -418,6 +421,7 @@ def get_album_tracks(album_id):
     except Exception:
         app.logger.exception("Failed to fetch album tracks")
         return jsonify({"error": "Failed to fetch album tracks"}), 502
+
 
 @app.route('/api/play-track', methods=["POST"])
 def play_track():
@@ -536,18 +540,19 @@ def add_to_playlist(playlist_id):
     except Exception:
         app.logger.exception("Failed to add track to playlist")
         return jsonify({"error": "Upstream Spotify error"}), 502
-    
+
+
 @app.route('/api/playlists/<playlist_id>/tracks')
 def get_playlist_tracks(playlist_id):
     """
     Retrieves all tracks for a specific playlist.
- 
+
     Returns:
         Response: JSON with playlist metadata and list of tracks.
     """
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         return jsonify({"auth_required": True, "auth_url": f"{FLASK_URL}/login"})
- 
+
     try:
         playlist = sp.playlist(playlist_id)
         tracks = []
@@ -578,7 +583,7 @@ def get_playlist_tracks(playlist_id):
             if not results.get("next"):
                 break
             offset += limit
- 
+
         images = playlist.get("images") or []
         return jsonify({
             "auth_required": False,
