@@ -395,8 +395,8 @@ def get_album_tracks(album_id):
                     "uri": t["uri"],
                     "duration_ms": t.get("duration_ms", 0),
                     "track_number": t.get("track_number", len(tracks) + 1),
-                    "artist": (t_artists[0]["name"] if t_artists 
-                               else artists[0]["name"] if artists 
+                    "artist": (t_artists[0]["name"] if t_artists
+                               else artists[0]["name"] if artists
                                else "Unknown"),
                     "cover_url": images[0]["url"] if images else None,
                 })
